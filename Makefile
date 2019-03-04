@@ -11,6 +11,9 @@
 
 default: all
 
+#TODO: rename
+project ?= webthing
+
 tmp_dir ?= tmp
 runtime ?= iotjs
 export runtime
@@ -21,6 +24,8 @@ babel_stamp_file += ${CURDIR}/extra/${runtime}/babel.txt
 babel_out_dir ?= tmp/babel/runtime/${runtime}/dist
 srcs_dir ?= lib example
 srcs ?= $(wildcard *.js lib/*.js | sort | uniq)
+example_srcs?=$(shell find example -iname "*.js" | sort | uniq)
+srcs += ${example_srcs}
 run_args ?=
 run_timeout ?= 10
 
@@ -33,6 +38,13 @@ iotjs_modules_dir?=${CURDIR}/iotjs_modules
 iotjs-express_url?=https://github.com/rzr/iotjs-express
 iotjs-express_revision?=v0.0.2
 iotjs_modules_dirs+=${iotjs_modules_dir}/iotjs-express
+
+deploy_modules_dir ?= ${CURDIR}/tmp/deploy/iotjs_modules
+deploy_module_dir ?= ${deploy_modules_dir}/${project}
+deploy_dirs += ${deploy_module_dir}
+deploy_dirs += ${deploy_modules_dir}/iotjs-express
+
+deploy_srcs += $(addprefix ${deploy_module_dir}/, ${srcs})
 
 
 help:
@@ -246,7 +258,7 @@ prep: ${runtime}/modules
 
 #TODO install subdir
 iotjs/modules: ${iotjs_modules_dirs}
-	ls $<
+	ls $^
 
 ${iotjs_modules_dir}/iotjs-express:
 	mkdir -p ${@D}
@@ -278,3 +290,14 @@ lint/iotjs: lint/iotjs/eslint lint/iotjs/babel
 #	${MAKE} babel/runtime/iotjs
 
 babel/runtimes: babel/runtime/iotjs babel/runtime/node
+
+${deploy_module_dir}/%: %
+	@echo "# TODO: minify: $< to $@"
+	install -d ${@D}
+	install $< $@
+
+${deploy_modules_dir}/iotjs-express: ${iotjs_modules_dir}/iotjs-express
+	make -C $< deploy deploy_modules_dir="${deploy_modules_dir}"
+
+deploy: ${deploy_srcs} ${deploy_dirs}
+	ls $<
