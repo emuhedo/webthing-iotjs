@@ -14,7 +14,7 @@ var webthing;
 try {
   webthing = require('../webthing');
 } catch (err) {
-  webthing = require('webthing');
+  webthing = require('webthing-iotjs');
 }
 
 var Property = webthing.Property;
